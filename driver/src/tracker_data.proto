@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package yolovr;
+
+// 3D Vector for position and rotation
+message Vector3 {
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
+
+// Quaternion for rotation representation
+message Quaternion {
+    float x = 1;
+    float y = 2;
+    float z = 3;
+    float w = 4;
+}
+
+// Individual tracker pose data
+message TrackerPose {
+    // Tracker identification
+    uint32 tracker_id = 1;          // 0-11 corresponding to MyTrackers enum
+    string tracker_name = 2;        // "LeftLeg", "RightLeg", etc.
+    
+    // Pose information
+    Vector3 position = 3;            // World space position (meters)
+    Quaternion rotation = 4;         // World space rotation
+    
+    // Tracking quality and status
+    bool is_tracking = 5;            // Is this tracker actively tracked?
+    float confidence = 6;            // Tracking confidence 0.0-1.0
+    uint64 timestamp = 7;            // Unix timestamp in microseconds
+    
+    // Velocity information (optional)
+    Vector3 velocity = 8;            // Linear velocity (m/s)
+    Vector3 angular_velocity = 9;    // Angular velocity (rad/s)
+}
+
+// Complete frame of all tracker data
+message TrackerFrame {
+    // Frame metadata
+    uint64 frame_id = 1;             // Monotonically increasing frame number
+    uint64 timestamp = 2;            // Frame timestamp in microseconds
+    uint32 source_id = 3;            // Identifier for the tracking system
+    
+    // HMD reference pose (for relative positioning)
+    TrackerPose hmd_pose = 4;        // HMD position as reference
+    
+    // All tracker poses
+    repeated TrackerPose trackers = 5;
+    
+    // System information
+    string system_name = 6;          // "YOLO Detection", "Motion Capture", etc.
+    float system_fps = 7;            // Tracking system frame rate
+    
+    // Calibration state
+    bool is_calibrated = 8;          // Is the system properly calibrated?
+    uint32 lost_tracking_count = 9;  // Number of trackers with lost tracking
+}
+
+// Configuration message for tracker system
+message TrackerConfig {
+    // Network configuration
+    string udp_address = 1;          // IP address to bind to
+    uint32 udp_port = 2;             // UDP port to listen on
+    
+    // Tracker configuration
+    bool use_prediction = 3;         // Enable pose prediction for smooth tracking
+    float prediction_time = 4;       // Prediction time in seconds
+    float smoothing_factor = 5;      // Pose smoothing factor 0.0-1.0
+    
+    // Fallback behavior
+    bool enable_fallback = 6;        // Fall back to fake data if no UDP data
+    float timeout_seconds = 7;       // Timeout before falling back
+    
+    // Tracker mapping (allows remapping tracker IDs)
+    map<uint32, uint32> tracker_mapping = 8; // source_id -> driver_id
+}

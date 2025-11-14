@@ -3,10 +3,12 @@
 
 #include <array>
 #include <string>
+#include <mutex>
 
 #include "openvr_driver.h"
 #include <atomic>
 #include <thread>
+#include "tracker_data.pb.h"
 
 enum MyTrackers
 {
@@ -51,6 +53,7 @@ public:
 
 	void MyRunFrame();
 	void MyProcessEvent( const vr::VREvent_t &vrevent );
+	void MyUpdateFromUDP( const yolovr::TrackerFrame &frame );
 
 	void MyPoseUpdateThread();
 
@@ -61,6 +64,11 @@ private:
 
 	std::string my_device_model_number_;
 	std::string my_device_serial_number_;
+
+	// UDP tracking data
+	std::atomic<bool> has_udp_data_;
+	yolovr::TrackerPose udp_pose_;
+	std::mutex udp_data_mutex_;
 
 	std::atomic< bool > is_active_;
 	std::thread my_pose_update_thread_;

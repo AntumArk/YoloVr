@@ -1,0 +1,4 @@
+# Protocol Buffers - using 3.20.x for compatibility with older protoc
+protobuf>=3.12.0,<3.21.0
+# NumPy for examples
+numpy>=1.19.0

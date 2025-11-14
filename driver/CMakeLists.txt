@@ -9,6 +9,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Enable Position Independent Code for shared libraries
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# Find required packages
+find_package(Protobuf REQUIRED)
+find_package(Threads REQUIRED)
+
 # For your project, this might look something like:
 set(OPENVR_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/openvr)
 
@@ -74,12 +78,19 @@ set(DRIVER_NAME "driver_${TARGET_NAME}")
 
 project(${TARGET_NAME})
 
+# Generate protobuf sources
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS src/tracker_data.proto)
+
 add_library(${DRIVER_NAME} SHARED
         src/hmd_driver_factory.cpp
         src/device_provider.h
         src/device_provider.cpp
         src/tracker_device_driver.h
         src/tracker_device_driver.cpp
+        src/tracker_data_receiver.h
+        src/tracker_data_receiver.cpp
+        ${PROTO_SRCS}
+        ${PROTO_HDRS}
         )
 
 # This is so we can build directly to "<repo_root>/<target_name>/bin/<platform>/<arch>/<driver_name>.<dll/so>"
@@ -90,12 +101,8 @@ set_target_properties(${DRIVER_NAME} PROPERTIES
     PREFIX ""
 )
 
-target_link_libraries(${DRIVER_NAME} PRIVATE ${OPENVR_LIBRARIES} util_driverlog util_vrmath)
-target_include_directories(${DRIVER_NAME} PRIVATE ${OPENVR_INCLUDE_DIR})
-
-# Find and link threading library (especially important for MinGW)
-find_package(Threads REQUIRED)
-target_link_libraries(${DRIVER_NAME} PRIVATE Threads::Threads)
+target_link_libraries(${DRIVER_NAME} PRIVATE ${OPENVR_LIBRARIES} util_driverlog util_vrmath ${Protobuf_LIBRARIES} Threads::Threads)
+target_include_directories(${DRIVER_NAME} PRIVATE ${OPENVR_INCLUDE_DIR} ${Protobuf_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
 
 # Static linking for MinGW to avoid external DLL dependencies
 if(MINGW)

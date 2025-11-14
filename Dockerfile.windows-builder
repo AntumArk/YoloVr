@@ -8,6 +8,9 @@ RUN apt-get update && apt-get install -y \
     ninja-build \
     git \
     pkg-config \
+    # Protocol Buffers
+    protobuf-compiler \
+    libprotobuf-dev \
     # MinGW-w64 cross-compilation toolchain for Windows
     gcc-mingw-w64-x86-64 \
     g++-mingw-w64-x86-64 \
@@ -20,6 +23,8 @@ RUN apt-get update && apt-get install -y \
 # ninja-build: Fast parallel build system (alternative to make)  
 # git: Version control system for cloning dependencies
 # pkg-config: Helper tool for compiling applications and libraries
+# protobuf-compiler: Protocol Buffers compiler for generating C++/Python code
+# libprotobuf-dev: Protocol Buffers C++ development libraries
 # gcc-mingw-w64-x86-64: MinGW-w64 C compiler for 64-bit Windows targets
 # g++-mingw-w64-x86-64: MinGW-w64 C++ compiler for 64-bit Windows targets
 # mingw-w64-tools: Additional utilities for MinGW-w64 (windres, dlltool, etc.)

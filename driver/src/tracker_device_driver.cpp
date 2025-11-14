@@ -61,6 +61,7 @@ MyTrackerDeviceDriver::MyTrackerDeviceDriver( unsigned int my_tracker_id )
 {
 	// Set a member to keep track of whether we've activated yet or not
 	is_active_ = false;
+	has_udp_data_ = false;
 
 	my_tracker_id_ = my_tracker_id;
 
@@ -168,59 +169,88 @@ vr::DriverPose_t MyTrackerDeviceDriver::GetPose()
 	pose.qWorldFromDriverRotation.w = 1.f;
 	pose.qDriverFromHeadRotation.w = 1.f;
 
-	vr::TrackedDevicePose_t hmd_pose{};
-
-	// GetRawTrackedDevicePoses expects an array.
-	// We only want the hmd pose, which is at index 0 of the array so we can just pass the struct in directly, instead
-	// of in an array
-	vr::VRServerDriverHost()->GetRawTrackedDevicePoses( 0.f, &hmd_pose, 1 );
-
-	// Get the position of the hmd from the 3x4 matrix GetRawTrackedDevicePoses returns
-	const vr::HmdVector3_t hmd_position = HmdVector3_From34Matrix( hmd_pose.mDeviceToAbsoluteTracking );
-	// Get the orientation of the hmd from the 3x4 matrix GetRawTrackedDevicePoses returns
-	const vr::HmdQuaternion_t hmd_orientation = HmdQuaternion_FromMatrix( hmd_pose.mDeviceToAbsoluteTracking );
-
-	// For HeadTracker, attach directly to HMD position
-	if (my_tracker_id_ == HeadTracker) {
-		pose.qRotation = hmd_orientation;
-		pose.vecPosition[0] = hmd_position.v[0];
-		pose.vecPosition[1] = hmd_position.v[1];
-		pose.vecPosition[2] = hmd_position.v[2];
-	} else {
-		// For other trackers, use the predefined offset
-		const TrackerOffset& offset = tracker_offsets[my_tracker_id_];
+	// Check if we have UDP data for this tracker
+	bool use_udp = has_udp_data_.load();
+	
+	if (use_udp) {
+		// Use UDP tracking data
+		std::lock_guard<std::mutex> lock(udp_data_mutex_);
 		
-		// Set the pose orientation to match HMD orientation for body trackers
-		pose.qRotation = hmd_orientation;
+		// Set position from UDP data
+		pose.vecPosition[0] = udp_pose_.position().x();
+		pose.vecPosition[1] = udp_pose_.position().y();
+		pose.vecPosition[2] = udp_pose_.position().z();
+		
+		// Set rotation from UDP data
+		pose.qRotation.x = udp_pose_.rotation().x();
+		pose.qRotation.y = udp_pose_.rotation().y();
+		pose.qRotation.z = udp_pose_.rotation().z();
+		pose.qRotation.w = udp_pose_.rotation().w();
+		
+		// Set velocities if available
+		if (udp_pose_.has_velocity()) {
+			pose.vecVelocity[0] = udp_pose_.velocity().x();
+			pose.vecVelocity[1] = udp_pose_.velocity().y();
+			pose.vecVelocity[2] = udp_pose_.velocity().z();
+			pose.vecWorldFromDriverTranslation[0] = pose.vecVelocity[0];
+			pose.vecWorldFromDriverTranslation[1] = pose.vecVelocity[1];
+			pose.vecWorldFromDriverTranslation[2] = pose.vecVelocity[2];
+		}
+		
+		// Set tracking confidence
+		pose.poseIsValid = udp_pose_.is_tracking();
+		pose.deviceIsConnected = true;
+		pose.result = udp_pose_.is_tracking() ? vr::TrackingResult_Running_OK : vr::TrackingResult_Running_OutOfRange;
+		
+		DriverLog("Tracker %s using UDP data: pos(%.3f,%.3f,%.3f) tracking=%s", 
+			tracker_names[my_tracker_id_], 
+			udp_pose_.position().x(), udp_pose_.position().y(), udp_pose_.position().z(),
+			udp_pose_.is_tracking() ? "true" : "false");
+		
+	} else {
+		// Fallback to fake data when no UDP data available
+		vr::TrackedDevicePose_t hmd_pose{};
+		vr::VRServerDriverHost()->GetRawTrackedDevicePoses( 0.f, &hmd_pose, 1 );
 
-		const vr::HmdVector3_t offset_position = {
-			offset.x,
-			offset.y,
-			offset.z
-		};
+		// Get the position of the hmd from the 3x4 matrix GetRawTrackedDevicePoses returns
+		const vr::HmdVector3_t hmd_position = HmdVector3_From34Matrix( hmd_pose.mDeviceToAbsoluteTracking );
+		// Get the orientation of the hmd from the 3x4 matrix GetRawTrackedDevicePoses returns
+		const vr::HmdQuaternion_t hmd_orientation = HmdQuaternion_FromMatrix( hmd_pose.mDeviceToAbsoluteTracking );
 
-		// Rotate our offset by the hmd quaternion (so the trackers maintain relative position to user), 
-		// and then add the position of the hmd to put it into position.
-		const vr::HmdVector3_t position = hmd_position + (offset_position * hmd_orientation);
+		// For HeadTracker, attach directly to HMD position
+		if (my_tracker_id_ == HeadTracker) {
+			pose.qRotation = hmd_orientation;
+			pose.vecPosition[0] = hmd_position.v[0];
+			pose.vecPosition[1] = hmd_position.v[1];
+			pose.vecPosition[2] = hmd_position.v[2];
+		} else {
+			// For other trackers, use the predefined offset
+			const TrackerOffset& offset = tracker_offsets[my_tracker_id_];
+			
+			// Set the pose orientation to match HMD orientation for body trackers
+			pose.qRotation = hmd_orientation;
 
-		// copy our position to our pose
-		pose.vecPosition[0] = position.v[0];
-		pose.vecPosition[1] = position.v[1];
-		pose.vecPosition[2] = position.v[2];
+			const vr::HmdVector3_t offset_position = {
+				offset.x,
+				offset.y,
+				offset.z
+			};
+
+			// Rotate our offset by the hmd quaternion (so the trackers maintain relative position to user), 
+			// and then add the position of the hmd to put it into position.
+			const vr::HmdVector3_t position = hmd_position + (offset_position * hmd_orientation);
+
+			// copy our position to our pose
+			pose.vecPosition[0] = position.v[0];
+			pose.vecPosition[1] = position.v[1];
+			pose.vecPosition[2] = position.v[2];
+		}
+
+		// The pose we provided is valid.
+		pose.poseIsValid = true;
+		pose.deviceIsConnected = true;
+		pose.result = vr::TrackingResult_Running_OK;
 	}
-
-	// The pose we provided is valid.
-	pose.poseIsValid = true;
-
-	// Our device is always connected.
-	// In reality with physical devices, when they get disconnected,
-	// set this to false and icons in SteamVR will be updated to show the device is disconnected
-	pose.deviceIsConnected = true;
-
-	// The state of our tracking. For our virtual device, it's always going to be ok,
-	// but this can get set differently to inform the runtime about the state of the device's tracking
-	// and update the icons to inform the user accordingly.
-	pose.result = vr::TrackingResult_Running_OK;
 
 	return pose;
 }
@@ -267,6 +297,25 @@ void MyTrackerDeviceDriver::Deactivate()
 	my_device_index_ = vr::k_unTrackedDeviceIndexInvalid;
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: Update tracker with data from UDP
+//-----------------------------------------------------------------------------
+void MyTrackerDeviceDriver::MyUpdateFromUDP( const yolovr::TrackerFrame &frame )
+{
+	// Find our tracker in the UDP frame
+	for (const auto& tracker_pose : frame.trackers()) {
+		if (tracker_pose.tracker_id() == my_tracker_id_) {
+			std::lock_guard<std::mutex> lock(udp_data_mutex_);
+			udp_pose_ = tracker_pose;
+			has_udp_data_.store(tracker_pose.is_tracking());
+			return;
+		}
+	}
+	
+	// If we didn't find our tracker in the frame, mark as not tracking
+	has_udp_data_.store(false);
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: This is called by our IServerTrackedDeviceProvider when its RunFrame() method gets called.
