@@ -1,6 +1,37 @@
 version: '3.8'
 
 services:
+  # Linux native build service
+  linux-builder:
+    build:
+      context: .
+      dockerfile: Dockerfile.linux-builder
+    volumes:
+      - .:/workspace
+      - linux-build-cache:/workspace/build-linux
+    working_dir: /workspace
+    command: >
+      /bin/bash -c "
+      mkdir -p build-linux &&
+      cd build-linux &&
+      cmake ../driver &&
+      make -j$$(nproc)
+      "
+
+  # Interactive Linux development container
+  linux-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.linux-builder
+    volumes:
+      - .:/workspace
+      - linux-build-cache:/workspace/build-linux
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+  # Windows cross-compilation build service
   windows-builder:
     build:
       context: .
@@ -19,7 +50,7 @@ services:
       make -j$$(nproc)
       "
 
-  # Interactive development container
+  # Interactive Windows development container
   windows-dev:
     build:
       context: .
@@ -33,4 +64,5 @@ services:
     command: /bin/bash
 
 volumes:
+  linux-build-cache:
   windows-build-cache:
