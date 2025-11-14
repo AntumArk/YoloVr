@@ -8,17 +8,21 @@
 #include <atomic>
 #include <thread>
 
-enum MyComponent
+enum MyTrackers
 {
-	MyComponent_a_touch,
-	MyComponent_a_click,
-
-	MyComponent_trigger_value,
-	MyComponent_trigger_click,
-
-	MyComponent_MAX
+	LeftLegTracker = 0,
+	RightLegTracker = 1,
+	LeftThighTracker = 2,
+	RightThighTracker = 3,
+	HipTracker = 4,
+	WaistTracker = 5,
+	ChestTracker = 6,
+	LeftHandTracker = 7,
+	RightHandTracker = 8,
+	LeftElbowTracker = 9,
+	RightElbowTracker = 10,
+	HeadTracker = 11, // only for ground-truth tracking setups
 };
-
 //-----------------------------------------------------------------------------
 // Purpose: Represents a single tracked device in the system.
 // What this device actually is (controller, hmd) depends on the
@@ -57,8 +61,6 @@ private:
 
 	std::string my_device_model_number_;
 	std::string my_device_serial_number_;
-
-	std::array< vr::VRInputComponentHandle_t, MyComponent_MAX > input_handles_;
 
 	std::atomic< bool > is_active_;
 	std::thread my_pose_update_thread_;

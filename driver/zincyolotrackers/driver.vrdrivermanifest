@@ -3,6 +3,7 @@
 	"name" : "zincyolotrackers",
 	"directory" : "",
 	"resourceOnly" : false,
+	"description" : "YoloVr Full Body Tracking System - 12 tracker implementation for VR body tracking",
 
 	"hmd_presence" : []
 }
