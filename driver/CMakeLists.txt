@@ -6,6 +6,9 @@ project(zincyolotrackers)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Enable Position Independent Code for shared libraries
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # For your project, this might look something like:
 set(OPENVR_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/openvr)
 

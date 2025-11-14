@@ -1,6 +1,6 @@
 {
    "driver_zincyolotrackers" : {
       "enable" : true,
-      "mytracker_model_number" : "MyTrackerModelNumber 1"
+      "mytracker_model_number" : "YoloVr Full Body Tracker"
    }
 }

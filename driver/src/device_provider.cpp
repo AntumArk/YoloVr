@@ -13,23 +13,22 @@ vr::EVRInitError MyDeviceProvider::Init( vr::IVRDriverContext *pDriverContext )
 	// OpenVR provides a macro to do this for us.
 	VR_INIT_SERVER_DRIVER_CONTEXT( pDriverContext );
 
-	const unsigned int number_of_trackers = 2;
-	for ( unsigned int i = 0; i < number_of_trackers; i++ )
+	// Create all tracker types defined in our enum
+	const unsigned int number_of_tracker_types = 12; // Total number of tracker types in MyTrackers enum
+	for ( unsigned int i = 0; i < number_of_tracker_types; i++ )
 	{
-
 		std::unique_ptr< MyTrackerDeviceDriver > tracker_device = std::make_unique< MyTrackerDeviceDriver >( i );
 
-		// Now we need to tell vrserver about our controllers.
+		// Now we need to tell vrserver about our trackers.
 		// The first argument is the serial number of the device, which must be unique across all devices.
 		// We get it from our driver settings when we instantiate,
 		// And can pass it out of the function with MyGetSerialNumber().
-		// Let's add the left hand controller first (there isn't a specific order).
 		// make sure we actually managed to create the device.
 		// TrackedDeviceAdded returning true means we have had our device added to SteamVR.
 		if ( !vr::VRServerDriverHost()->TrackedDeviceAdded( tracker_device->MyGetSerialNumber().c_str(),
 				 vr::TrackedDeviceClass_GenericTracker, tracker_device.get() ) )
 		{
-			DriverLog( "Failed to create left controller device!" );
+			DriverLog( "Failed to create tracker device with id %d!", i );
 			// We failed? Return early.
 			return vr::VRInitError_Driver_Unknown;
 		}
@@ -37,6 +36,7 @@ vr::EVRInitError MyDeviceProvider::Init( vr::IVRDriverContext *pDriverContext )
 		my_tracker_devices_.emplace_back( std::move( tracker_device ) );
 	}
 
+	DriverLog( "Created %d tracker devices successfully", number_of_tracker_types );
 	return vr::VRInitError_None;
 }
 

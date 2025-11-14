@@ -1,24 +1,22 @@
 {
   "jsonid": "input_profile",
-  "controller_type": "mytracker",
+  "controller_type": "yolotrackers",
+  "device_class": "TrackedDeviceClass_GenericTracker",
   "input_bindingui_mode": "single_device",
   "tracker_types": {
-    "TrackerRole_Waist": "{simpletrackers}/input/tracker/mytracker_waist_profile.json",
-    "TrackerRole_Chest": "{simpletrackers}/input/tracker/mytracker_chest_profile.json"
+    "TrackerRole_LeftLeg": "{zincyolotrackers}/input/tracker/yolotracker_leftleg_profile.json",
+    "TrackerRole_RightLeg": "{zincyolotrackers}/input/tracker/yolotracker_rightleg_profile.json",
+    "TrackerRole_LeftThigh": "{zincyolotrackers}/input/tracker/yolotracker_leftthigh_profile.json",
+    "TrackerRole_RightThigh": "{zincyolotrackers}/input/tracker/yolotracker_rightthigh_profile.json",
+    "TrackerRole_Hip": "{zincyolotrackers}/input/tracker/yolotracker_hip_profile.json",
+    "TrackerRole_Waist": "{zincyolotrackers}/input/tracker/yolotracker_waist_profile.json",
+    "TrackerRole_Chest": "{zincyolotrackers}/input/tracker/yolotracker_chest_profile.json",
+    "TrackerRole_LeftUpperArm": "{zincyolotrackers}/input/tracker/yolotracker_leftupperarm_profile.json",
+    "TrackerRole_RightUpperArm": "{zincyolotrackers}/input/tracker/yolotracker_rightupperarm_profile.json",
+    "TrackerRole_LeftForearm": "{zincyolotrackers}/input/tracker/yolotracker_leftforearm_profile.json",
+    "TrackerRole_RightForearm": "{zincyolotrackers}/input/tracker/yolotracker_rightforearm_profile.json",
+    "TrackerRole_Head": "{zincyolotrackers}/input/tracker/yolotracker_head_profile.json"
   },
-  "input_source": {
-    "/input/trigger" : {
-        "type" : "trigger",
-		"click" : true,
-		"value" : true,
-		"order" :  2,
-        "binding_image_point" : [ 127, 62 ]
-    },
-    "/input/grip" : {
-        "type" : "button",
-		"order" :  3,
-        "binding_image_point" : [ 210, 100 ]
-    }
-  },
+  "input_source": {},
   "default_bindings": []
 }
