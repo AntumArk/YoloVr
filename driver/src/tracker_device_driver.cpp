@@ -74,7 +74,7 @@ vr::EVRInitError MyTrackerDeviceDriver::Activate( uint32_t unObjectId )
 	// Even though these are also defined in our input profile,
 	// We need to get handles to them to update the inputs.
 
-	vr::VRDriverInput()->CreateBooleanComponent( container, "/input/grip/click", &input_handles_[MyComponent_grip_click] );
+	vr::VRDriverInput()->CreateBooleanComponent( container, "/input/grip/click", &input_handles_[MyComponent_a_click] );
 
 	// Let's set up our trigger. We've defined it to have a value and click component.
 
@@ -148,7 +148,7 @@ vr::DriverPose_t MyTrackerDeviceDriver::GetPose()
 	pose.qRotation = hmd_orientation;
 
 	const vr::HmdVector3_t offset_position = {
-		-0.15f + my_tracker_id_ * 0.15, // translate our tracker depending on the id we were provided
+		-0.15f + my_tracker_id_ * 0.15f, // translate our tracker depending on the id we were provided
 		0.1f,							// shift it up a little to make it more in view
 		-0.5f,							// put each controller 0.5m forward in front of the hmd so we can see it.
 	};
@@ -241,7 +241,7 @@ void MyTrackerDeviceDriver::MyRunFrame()
 	incrementor++;
 
 	// update our inputs here
-	vr::VRDriverInput()->UpdateBooleanComponent( input_handles_[ MyComponent_grip_click ], b_values, 0 );
+	vr::VRDriverInput()->UpdateBooleanComponent( input_handles_[ MyComponent_a_click ], b_values, 0 );
 
 	vr::VRDriverInput()->UpdateBooleanComponent( input_handles_[ MyComponent_trigger_click ], b_values, 0 );
 	vr::VRDriverInput()->UpdateScalarComponent( input_handles_[ MyComponent_trigger_value ], f_values, 0 );
