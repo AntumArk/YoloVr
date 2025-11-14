@@ -1,6 +1,7 @@
 //============ Copyright (c) Valve Corporation, All rights reserved. ============
 #include "tracker_device_driver.h"
 
+#include <chrono>
 #include "driverlog.h"
 #include "vrmath.h"
 

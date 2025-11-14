@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.7.1)
 
 project(zincyolotrackers)
 
+# Require C++14 for std::make_unique and threading support
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # For your project, this might look something like:
 set(OPENVR_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/openvr)
 
@@ -84,6 +88,10 @@ set_target_properties(${DRIVER_NAME} PROPERTIES
 
 target_link_libraries(${DRIVER_NAME} PRIVATE ${OPENVR_LIBRARIES} util_driverlog util_vrmath)
 target_include_directories(${DRIVER_NAME} PRIVATE ${OPENVR_INCLUDE_DIR})
+
+# Find and link threading library (especially important for MinGW)
+find_package(Threads REQUIRED)
+target_link_libraries(${DRIVER_NAME} PRIVATE Threads::Threads)
 
 # Copy driver assets to repo root folder structure
 add_custom_command(

@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  windows-builder:
+    build:
+      context: .
+      dockerfile: Dockerfile.windows-builder
+    volumes:
+      - .:/workspace
+      - windows-build-cache:/workspace/build-windows
+    working_dir: /workspace
+    environment:
+      - CMAKE_TOOLCHAIN_FILE=/workspace/cmake/windows-toolchain.cmake
+    command: >
+      /bin/bash -c "
+      mkdir -p build-windows &&
+      cd build-windows &&
+      cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/windows-toolchain.cmake ../driver &&
+      make -j$$(nproc)
+      "
+
+  # Interactive development container
+  windows-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.windows-builder
+    volumes:
+      - .:/workspace
+      - windows-build-cache:/workspace/build-windows
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+volumes:
+  windows-build-cache:
