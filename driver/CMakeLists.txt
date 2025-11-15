@@ -94,6 +94,11 @@ target_include_directories(${DRIVER_NAME} PRIVATE ${OPENVR_INCLUDE_DIR})
 find_package(Threads REQUIRED)
 target_link_libraries(${DRIVER_NAME} PRIVATE Threads::Threads)
 
+# Static linking for MinGW to avoid external DLL dependencies
+if(MINGW)
+    target_link_options(${DRIVER_NAME} PRIVATE -static-libgcc -static-libstdc++ -static)
+endif()
+
 # Copy driver assets to repo root folder structure
 add_custom_command(
         TARGET ${DRIVER_NAME}
@@ -102,69 +107,3 @@ add_custom_command(
         ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_NAME}
         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}
 )
-
-# Copy openvr_api.dll to the driver bin directory
-add_custom_command(
-        TARGET ${DRIVER_NAME}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${OPENVR_LIB_DIR}/bin/${ARCH_TARGET}/openvr_api.dll
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}/bin/${ARCH_TARGET}/openvr_api.dll
-)
-
-# Copy MinGW runtime DLLs when cross-compiling for Windows
-if(MINGW)
-    # Find MinGW compiler directory and lib paths
-    get_filename_component(MINGW_BIN_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
-    
-    # Find gcc version directory for libgcc and libstdc++
-    execute_process(
-        COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libgcc_s_seh-1.dll
-        OUTPUT_VARIABLE LIBGCC_PATH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    get_filename_component(MINGW_GCC_DIR ${LIBGCC_PATH} DIRECTORY)
-    
-    # Find libwinpthread location
-    execute_process(
-        COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libwinpthread-1.dll
-        OUTPUT_VARIABLE LIBWINPTHREAD_PATH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    
-    # Copy runtime DLLs
-    if(EXISTS "${LIBGCC_PATH}")
-        add_custom_command(
-            TARGET ${DRIVER_NAME}
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${LIBGCC_PATH}"
-            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}/bin/${ARCH_TARGET}/libgcc_s_seh-1.dll"
-        )
-    endif()
-    
-    execute_process(
-        COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libstdc++-6.dll
-        OUTPUT_VARIABLE LIBSTDCPP_PATH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    if(EXISTS "${LIBSTDCPP_PATH}")
-        add_custom_command(
-            TARGET ${DRIVER_NAME}
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${LIBSTDCPP_PATH}"
-            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}/bin/${ARCH_TARGET}/libstdc++-6.dll"
-        )
-    endif()
-    
-    if(EXISTS "${LIBWINPTHREAD_PATH}")
-        add_custom_command(
-            TARGET ${DRIVER_NAME}
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${LIBWINPTHREAD_PATH}"
-            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}/bin/${ARCH_TARGET}/libwinpthread-1.dll"
-        )
-    endif()
-endif()
