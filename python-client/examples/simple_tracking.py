@@ -9,14 +9,18 @@ import math
 from pathlib import Path
 
 # Add the yolovr package to Python path
-sys.path.insert(0, str(Path(__file__).parent.parent / 'yolovr'))
+# Go up to python-client directory, then into yolovr
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
     from yolovr import TrackerClient
     print("✓ YoloVr package imported successfully")
 except ImportError as e:
     print(f"Error importing YoloVr package: {e}")
-    print("Run scripts/generate_proto.py first to generate protobuf bindings")
+    print("Generate protobuf bindings first:")
+    print("  python python-client/scripts/generate_proto_docker.py")
+    print("  OR")
+    print("  python python-client/scripts/generate_proto.py")
     sys.exit(1)
 
 

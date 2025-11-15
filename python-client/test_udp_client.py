@@ -13,16 +13,17 @@ import argparse
 import sys
 import os
 
-# Add the driver src directory to Python path for generated protobuf files
-sys.path.append(os.path.join(os.path.dirname(__file__), 'driver/src'))
+# Add the yolovr package directory to Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'yolovr'))
 
 try:
     import tracker_data_pb2 as yolovr
 except ImportError:
     print("Error: Could not import tracker_data_pb2")
     print("Make sure you've generated the Python protobuf files:")
-    print("  cd /home/causticlaptop/Projects/YoloVr")
-    print("  protoc --python_out=driver/src driver/src/tracker_data.proto")
+    print("  python python-client/scripts/generate_proto_docker.py")
+    print("  OR")
+    print("  python python-client/scripts/generate_proto.py")
     sys.exit(1)
 
 class TrackerTestClient:

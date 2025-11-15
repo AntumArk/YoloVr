@@ -36,7 +36,7 @@ def main():
     # Get script directory
     script_dir = Path(__file__).parent
     project_root = script_dir.parent.parent
-    proto_file = project_root / 'driver' / 'src' / 'tracker_data.proto'
+    proto_file = project_root / 'proto' / 'tracker_data.proto'
     output_dir = script_dir.parent / 'yolovr'
     
     print(f"Script directory: {script_dir}")

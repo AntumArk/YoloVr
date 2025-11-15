@@ -84,8 +84,8 @@ set(DRIVER_NAME "driver_${TARGET_NAME}")
 
 project(${TARGET_NAME})
 
-# Generate protobuf sources
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS src/tracker_data.proto)
+# Generate protobuf sources from shared proto directory
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${REPO_ROOT}/proto/tracker_data.proto)
 
 add_library(${DRIVER_NAME} SHARED
         src/hmd_driver_factory.cpp

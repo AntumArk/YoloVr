@@ -17,10 +17,23 @@ pip install -r requirements.txt
 ```
 
 ### Generate Protobuf Files
+
+**Option 1: Using Docker (Recommended - no local protoc needed)**
 ```bash
-# From project root
-python-client/scripts/generate_proto.py
+# Uses the same protoc version as the C++ driver build
+python python-client/scripts/generate_proto_docker.py
 ```
+
+**Option 2: Using local protoc**
+```bash
+# Requires protoc installed on your system
+python python-client/scripts/generate_proto.py
+```
+
+To install protoc locally:
+- **Ubuntu/Debian**: `sudo apt install protobuf-compiler`
+- **macOS**: `brew install protobuf`
+- **Windows**: Download from [protobuf releases](https://github.com/protocolbuffers/protobuf/releases)
 
 ### Run Test Client
 ```bash

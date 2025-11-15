@@ -107,7 +107,7 @@ class TrackerFrameBuilder:
         """
         frame = pb.TrackerFrame()
         frame.frame_id = self.frame_id
-        frame.timestamp_ns = int(time.time() * 1_000_000_000)
+        frame.timestamp = int(time.time() * 1_000_000)  # Microseconds
         frame.source_id = self.source_id
         frame.system_name = self.system_name
         
