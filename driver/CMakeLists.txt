@@ -3,13 +3,19 @@ cmake_minimum_required(VERSION 3.7.1)
 project(zincyolotrackers)
 
 # Require C++14 for std::make_unique and threading support
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Enable Position Independent Code for shared libraries
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Find required packages
+# When cross-compiling, help CMake find the MinGW Protobuf installation
+if(MINGW)
+    set(Protobuf_INCLUDE_DIR /usr/x86_64-w64-mingw32/include)
+    set(Protobuf_LIBRARY /usr/x86_64-w64-mingw32/lib/libprotobuf.a)
+    set(Protobuf_PROTOC_EXECUTABLE /usr/bin/protoc)
+endif()
 find_package(Protobuf REQUIRED)
 find_package(Threads REQUIRED)
 
@@ -107,6 +113,8 @@ target_include_directories(${DRIVER_NAME} PRIVATE ${OPENVR_INCLUDE_DIR} ${Protob
 # Static linking for MinGW to avoid external DLL dependencies
 if(MINGW)
     target_link_options(${DRIVER_NAME} PRIVATE -static-libgcc -static-libstdc++ -static)
+    # Link Windows socket library for network functionality
+    target_link_libraries(${DRIVER_NAME} PRIVATE ws2_32)
 endif()
 
 # Copy driver assets to repo root folder structure
