@@ -124,6 +124,18 @@ vr::EVRInitError MyTrackerDeviceDriver::Activate( uint32_t unObjectId )
 	// Set tracker-specific name
 	std::string display_name = std::string("YoloVr ") + tracker_names[my_tracker_id_] + " Tracker";
 	vr::VRProperties()->SetStringProperty( container, vr::Prop_RenderModelName_String, display_name.c_str() );
+	
+	// CRITICAL: Set the controller type to help VRChat identify the tracker role
+	// Use "vive_tracker" as the input profile to ensure compatibility
+	vr::VRProperties()->SetStringProperty( container, vr::Prop_ControllerType_String, "vive_tracker" );
+	
+	// Set this property to make the tracker available for body tracking
+	vr::VRProperties()->SetBoolProperty( container, vr::Prop_NeverTracked_Bool, false );
+	vr::VRProperties()->SetBoolProperty( container, vr::Prop_WillDriftInYaw_Bool, true );
+	vr::VRProperties()->SetBoolProperty( container, vr::Prop_DeviceProvidesBatteryStatus_Bool, false );
+	
+	// Set input profile path - even though we have no inputs, this helps with compatibility
+	vr::VRProperties()->SetStringProperty( container, vr::Prop_InputProfilePath_String, "{htc}/input/vive_tracker_profile.json" );
 
 	// Trackers don't have inputs, so we skip all the input setup
 
