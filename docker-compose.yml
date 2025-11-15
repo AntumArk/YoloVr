@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Linux native build service
   linux-builder:
