@@ -1,0 +1,305 @@
+@startuml YoloVr_Tracker_Architecture
+
+!define RECTANGLE class
+
+title YoloVr Full-Body Tracking System Architecture
+
+package "SteamVR Runtime" {
+    [VRServer] as vrserver
+    [OpenVR API] as openvr
+    [SteamVR Dashboard] as dashboard
+    [VR Applications] as vrapps
+}
+
+package "YoloVr Driver" {
+    [HMD Driver Factory] as factory
+    [Device Provider] as provider
+    
+    package "Tracker Instances" {
+        [LeftLeg Tracker] as leftleg
+        [RightLeg Tracker] as rightleg
+        [LeftThigh Tracker] as leftthigh
+        [RightThigh Tracker] as rightthigh
+        [Hip Tracker] as hip
+        [Waist Tracker] as waist
+        [Chest Tracker] as chest
+        [LeftUpperArm Tracker] as leftarm
+        [RightUpperArm Tracker] as rightarm
+        [LeftForearm Tracker] as leftforearm
+        [RightForearm Tracker] as rightforearm
+        [Head Tracker] as head
+    }
+    
+    package "Resource Files" {
+        [Driver Manifest] as manifest
+        [Input Profiles] as profiles
+        [Settings] as settings
+        [Localization] as localization
+    }
+}
+
+package "Hardware" {
+    [VR Headset] as hmd
+    [Base Stations] as basestations
+}
+
+' Connections
+vrserver --> factory : Load Driver
+factory --> provider : Create Device Provider
+provider --> leftleg : Create Tracker Instance
+provider --> rightleg : Create Tracker Instance
+provider --> leftthigh : Create Tracker Instance
+provider --> rightthigh : Create Tracker Instance
+provider --> hip : Create Tracker Instance
+provider --> waist : Create Tracker Instance
+provider --> chest : Create Tracker Instance
+provider --> leftarm : Create Tracker Instance
+provider --> rightarm : Create Tracker Instance
+provider --> leftforearm : Create Tracker Instance
+provider --> rightforearm : Create Tracker Instance
+provider --> head : Create Tracker Instance
+
+leftleg --> vrserver : Pose Updates (200Hz)
+rightleg --> vrserver : Pose Updates (200Hz)
+leftthigh --> vrserver : Pose Updates (200Hz)
+rightthigh --> vrserver : Pose Updates (200Hz)
+hip --> vrserver : Pose Updates (200Hz)
+waist --> vrserver : Pose Updates (200Hz)
+chest --> vrserver : Pose Updates (200Hz)
+leftarm --> vrserver : Pose Updates (200Hz)
+rightarm --> vrserver : Pose Updates (200Hz)
+leftforearm --> vrserver : Pose Updates (200Hz)
+rightforearm --> vrserver : Pose Updates (200Hz)
+head --> vrserver : Pose Updates (200Hz)
+
+vrserver --> openvr : Tracker Data
+openvr --> dashboard : Device Information
+openvr --> vrapps : Tracking Data
+
+hmd --> vrserver : HMD Pose
+basestations --> vrserver : Tracking Reference
+
+manifest --> vrserver : Driver Configuration
+profiles --> vrserver : Input Definitions
+settings --> vrserver : Default Values
+localization --> vrserver : Display Names
+
+note right of leftleg : Position: (-0.15, -1.2, 0.0)\nSerial: YoloVr_LeftLeg_0\nRole: TrackedDeviceClass_GenericTracker
+note right of rightleg : Position: (0.15, -1.2, 0.0)\nSerial: YoloVr_RightLeg_1\nRole: TrackedDeviceClass_GenericTracker
+note right of head : Position: (0.0, 0.0, 0.0)\nSerial: YoloVr_Head_11\nAttached to HMD Position
+
+@enduml
+
+' Data Flow Diagram
+@startuml YoloVr_Data_Flow
+
+title YoloVr Tracker Data Flow
+
+participant "VR Headset" as HMD
+participant "SteamVR" as SVR
+participant "YoloVr Provider" as Provider
+participant "Tracker Instances" as Trackers
+participant "VR Applications" as Apps
+
+== Initialization ==
+SVR -> Provider : Init(IVRDriverContext)
+Provider -> Trackers : Create 12 Tracker Instances
+loop For each tracker
+    Trackers -> SVR : TrackedDeviceAdded(serial, class, instance)
+    SVR -> Trackers : Activate(deviceId)
+    Trackers -> Trackers : Start Pose Update Thread
+end
+
+== Runtime Operation ==
+HMD -> SVR : HMD Pose Data
+SVR -> Trackers : GetRawTrackedDevicePoses(hmd_pose)
+
+loop Every 5ms
+    Trackers -> Trackers : Calculate Relative Position
+    note right : position = hmd_position + (offset * hmd_rotation)
+    Trackers -> SVR : TrackedDevicePoseUpdated(pose)
+end
+
+SVR -> Apps : GetDevicePoses()
+Apps -> Apps : Render Virtual Trackers
+
+== Shutdown ==
+SVR -> Trackers : Deactivate()
+Trackers -> Trackers : Stop Pose Update Thread
+SVR -> Provider : Cleanup()
+
+@enduml
+
+' Component Interaction Diagram
+@startuml YoloVr_Component_Interaction
+
+title YoloVr Component Interaction
+
+package "Tracker Device Driver" {
+    class MyTrackerDeviceDriver {
+        +MyTrackerDeviceDriver(tracker_id)
+        +Activate(deviceId) : EVRInitError
+        +GetPose() : DriverPose_t
+        +MyPoseUpdateThread() : void
+        +Deactivate() : void
+        -my_tracker_id_ : unsigned int
+        -my_device_index_ : TrackedDeviceIndex_t
+        -my_device_serial_number_ : string
+        -my_pose_update_thread_ : thread
+    }
+}
+
+package "Device Provider" {
+    class MyDeviceProvider {
+        +Init(driverContext) : EVRInitError
+        +RunFrame() : void
+        +Cleanup() : void
+        -my_tracker_devices_ : vector<unique_ptr<MyTrackerDeviceDriver>>
+    }
+}
+
+package "OpenVR Interfaces" {
+    interface ITrackedDeviceServerDriver {
+        +Activate(deviceId) : EVRInitError
+        +Deactivate() : void
+        +GetPose() : DriverPose_t
+        +GetComponent(componentName) : void*
+    }
+    
+    interface IServerTrackedDeviceProvider {
+        +Init(driverContext) : EVRInitError
+        +RunFrame() : void
+        +Cleanup() : void
+    }
+}
+
+package "Resource Configuration" {
+    class TrackerProfiles {
+        +yolotracker_leftleg_profile.json
+        +yolotracker_rightleg_profile.json
+        +yolotracker_leftthigh_profile.json
+        +yolotracker_rightthigh_profile.json
+        +yolotracker_hip_profile.json
+        +yolotracker_waist_profile.json
+        +yolotracker_chest_profile.json
+        +yolotracker_leftupperarm_profile.json
+        +yolotracker_rightupperarm_profile.json
+        +yolotracker_leftforearm_profile.json
+        +yolotracker_rightforearm_profile.json
+        +yolotracker_head_profile.json
+    }
+    
+    class DriverSettings {
+        +driver.vrdrivermanifest
+        +default.vrsettings
+        +localization.json
+    }
+}
+
+MyDeviceProvider ..|> IServerTrackedDeviceProvider
+MyTrackerDeviceDriver ..|> ITrackedDeviceServerDriver
+
+MyDeviceProvider "1" --> "12" MyTrackerDeviceDriver : creates
+MyTrackerDeviceDriver --> TrackerProfiles : uses
+MyDeviceProvider --> DriverSettings : loads
+
+note top of MyTrackerDeviceDriver : Each instance represents one body part\nUpdates pose 200 times per second\nNo input handling - pose only
+
+note top of MyDeviceProvider : Creates all 12 tracker instances\nManages lifecycle and events\nProvides unified interface to SteamVR
+
+@enduml
+
+' Testing Flow Diagram
+@startuml YoloVr_Testing_Flow
+
+title YoloVr Testing Procedure Flow
+
+start
+
+:Install YoloVr Driver;
+:Start SteamVR;
+
+:Phase 1: Driver Registration Test;
+if (Driver loaded?) then (yes)
+    :Log "Created 12 tracker devices successfully";
+else (no)
+    :Check driver path and permissions;
+    stop
+endif
+
+:Phase 2: Device Enumeration Test;
+if (12 trackers detected?) then (yes)
+    :Verify unique serial numbers;
+else (no)
+    :Check device provider logic;
+    stop
+endif
+
+:Phase 3: Visual Verification;
+:Put on VR headset;
+:Look for tracker objects;
+if (All trackers visible?) then (yes)
+    :Check relative positions;
+else (no)
+    :Review pose calculation;
+    stop
+endif
+
+:Phase 4: Movement Test;
+:Move head around;
+:Walk in room-scale;
+if (Trackers follow smoothly?) then (yes)
+    :Test passed;
+else (no)
+    :Check pose update rate;
+    stop
+endif
+
+:Phase 5: Performance Test;
+:Monitor CPU usage;
+:Check frame rates;
+:Measure memory consumption;
+if (Performance acceptable?) then (yes)
+    :All tests passed;
+else (no)
+    :Optimize update frequency;
+    stop
+endif
+
+:Generate test report;
+stop
+
+@enduml
+
+' System State Diagram
+@startuml YoloVr_State_Diagram
+
+title YoloVr Tracker State Machine
+
+[*] --> Uninitialized
+
+Uninitialized --> Initializing : SteamVR loads driver
+
+Initializing --> Active : All trackers activated successfully
+Initializing --> Error : Activation failed
+
+Active --> Tracking : HMD pose available
+Active --> Standby : EnterStandby() called
+
+Tracking --> Tracking : Continuous pose updates (200Hz)
+Tracking --> Active : HMD tracking lost
+Tracking --> Standby : System idle
+
+Standby --> Active : LeaveStandby() called
+
+Active --> Deactivating : SteamVR shutdown
+Standby --> Deactivating : SteamVR shutdown
+Error --> Deactivating : Manual shutdown
+
+Deactivating --> [*] : Cleanup completed
+
+note right of Tracking : Each tracker maintains:\n- Relative position to HMD\n- Valid pose state\n- Connected status
+
+note right of Active : Trackers created but\nwaiting for HMD tracking
+
+@enduml

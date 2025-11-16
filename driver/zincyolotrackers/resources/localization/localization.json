@@ -1,6 +1,18 @@
 [
   {
     "language_tag": "en_US",
-    "mycontroller": "My Sample Tracker Driver"
+    "yolotrackers": "YoloVr Full Body Tracker System",
+    "yolotracker_leftleg": "YoloVr Left Leg Tracker",
+    "yolotracker_rightleg": "YoloVr Right Leg Tracker",
+    "yolotracker_leftthigh": "YoloVr Left Thigh Tracker",
+    "yolotracker_rightthigh": "YoloVr Right Thigh Tracker",
+    "yolotracker_hip": "YoloVr Hip Tracker",
+    "yolotracker_waist": "YoloVr Waist Tracker",
+    "yolotracker_chest": "YoloVr Chest Tracker",
+    "yolotracker_leftupperarm": "YoloVr Left Upper Arm Tracker",
+    "yolotracker_rightupperarm": "YoloVr Right Upper Arm Tracker",
+    "yolotracker_leftforearm": "YoloVr Left Forearm Tracker",
+    "yolotracker_rightforearm": "YoloVr Right Forearm Tracker",
+    "yolotracker_head": "YoloVr Head Tracker"
   }
 ]

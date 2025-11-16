@@ -2,6 +2,14 @@
 #pragma once
 
 #include <memory>
+#include <vector>
+
+#include "openvr_driver.h"
+#include "tracker_device_driver.h"
+#include "tracker_data_receiver.h"
+#pragma once
+
+#include <memory>
 
 #include "openvr_driver.h"
 #include "tracker_device_driver.h"
@@ -23,4 +31,5 @@ public:
 
 private:
 	std::vector< std::unique_ptr< MyTrackerDeviceDriver > > my_tracker_devices_;
+	std::unique_ptr<yolovr::TrackerDataReceiver> tracker_receiver_;
 };

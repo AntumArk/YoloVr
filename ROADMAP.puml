@@ -1,0 +1,291 @@
+@startuml YoloVr Development Roadmap
+
+title YoloVr Development Roadmap - Remaining Implementation Tasks
+
+skinparam backgroundColor #f8f9fa
+skinparam rectangle {
+    BackgroundColor<<completed>> #d4edda
+    BackgroundColor<<inprogress>> #fff3cd  
+    BackgroundColor<<todo>> #f8d7da
+    BackgroundColor<<testing>> #cce5ff
+    BorderColor #6c757d
+}
+
+' === COMPLETED FOUNDATION ===
+package "COMPLETED FOUNDATION" {
+    rectangle "Protocol Buffers\nIntegration" <<completed>> as proto {
+        - TrackerFrame schema
+        - C++ UDP receiver
+        - Python client library
+        - Cross-platform support
+    }
+    
+    rectangle "OpenVR Driver\nCore" <<completed>> as driver {
+        - Device provider
+        - Tracker device driver
+        - UDP data integration
+        - Fallback pose system
+    }
+    
+    rectangle "Build System" <<completed>> as build {
+        - CMake configuration
+        - Docker containers
+        - Cross-compilation
+        - Protobuf generation
+    }
+}
+
+' === PHASE 1: COMPUTER VISION ===
+package "PHASE 1: COMPUTER VISION PIPELINE" {
+    rectangle "Multi-Camera\nInput System" <<todo>> as cameras {
+        Priority: HIGH
+        - Multiple webcam URL feeds
+        - RTSP/HTTP stream support
+        - Camera calibration matrix
+        - Synchronized frame capture
+        - Frame rate optimization
+        .
+        Tech Stack:
+        - OpenCV VideoCapture
+        - Threading for parallel capture
+        - Camera intrinsic parameters
+    }
+    
+    rectangle "YOLO Pose\nIntegration" <<todo>> as yolo {
+        Priority: HIGH
+        - YOLOv8-pose model loading
+        - Real-time pose detection
+        - Multi-person tracking
+        - Confidence thresholding
+        - Pose landmark extraction
+        .
+        Output:
+        - 17-point human skeleton
+        - Bounding boxes
+        - Person tracking IDs
+    }
+    
+    rectangle "Pose Processing\n& Mapping" <<todo>> as processing {
+        Priority: HIGH
+        - YOLO -> VR tracker mapping
+        - Body part identification
+        - Coordinate transformation
+        - Smoothing & filtering
+        - Confidence validation
+        .
+        Mappings:
+        - Head -> tracker 11
+        - Shoulders -> trackers 7,8
+        - Hips -> tracker 4
+        - Ankles -> trackers 0,1
+    }
+}
+
+' === PHASE 2: SPATIAL TRACKING ===
+package "PHASE 2: SPATIAL TRACKING & FUSION" {
+    rectangle "Camera Spatial\nCalibration" <<todo>> as calibration {
+        Priority: MEDIUM
+        - Multi-camera extrinsics
+        - World coordinate system
+        - Camera position mapping
+        - Stereo/triangulation setup
+        - Reference point calibration
+        .
+        Methods:
+        - ChArUco board calibration
+        - Bundle adjustment
+        - SLAM integration
+    }
+    
+    rectangle "Coordinate System\nTransformation" <<todo>> as coordinates {
+        Priority: HIGH
+        - Camera -> World coordinates
+        - World -> VR space mapping
+        - Relative positioning mode
+        - Absolute positioning mode
+        - Scale factor calculation
+        .
+        Options:
+        - Room-scale tracking
+        - Seated/standing modes
+        - Origin point definition
+    }
+    
+    rectangle "HMD Position\nFusion" <<todo>> as hmd_fusion {
+        Priority: MEDIUM
+        - OpenVR HMD tracking data
+        - YOLO head pose correlation
+        - Drift correction assistance
+        - Head orientation validation
+        - Multi-modal sensor fusion
+        .
+        Benefits:
+        - Improved head tracking
+        - Pose estimation validation
+        - Scale reference
+    }
+}
+
+' === PHASE 3: OPTIMIZATION ===
+package "PHASE 3: PERFORMANCE & OPTIMIZATION" {
+    rectangle "Real-time\nOptimization" <<todo>> as optimization {
+        Priority: MEDIUM
+        - GPU acceleration (CUDA)
+        - Model quantization
+        - Frame skipping strategies
+        - Parallel processing
+        - Memory optimization
+        .
+        Targets:
+        - <16ms latency
+        - 60+ FPS processing
+        - Low CPU usage
+    }
+    
+    rectangle "Tracking Quality\nEnhancement" <<todo>> as quality {
+        Priority: MEDIUM
+        - Kalman filtering
+        - Pose prediction
+        - Occlusion handling
+        - Multi-person disambiguation
+        - Temporal consistency
+        .
+        Features:
+        - Motion smoothing
+        - Jitter reduction
+        - Loss recovery
+    }
+    
+    rectangle "Configuration\nSystem" <<todo>> as config {
+        Priority: LOW
+        - Camera setup wizard
+        - Calibration interface
+        - Tracking parameter tuning
+        - Profile management
+        - Debug visualization
+        .
+        UI Components:
+        - Web interface
+        - Real-time preview
+        - Parameter sliders
+    }
+}
+
+' === PHASE 4: TESTING & VALIDATION ===
+package "PHASE 4: COMPREHENSIVE TESTING PLAN" {
+    rectangle "Unit Testing\nSuite" <<testing>> as unit_tests {
+        Coverage Areas:
+        - Protobuf serialization
+        - UDP communication
+        - Pose transformation math
+        - Camera calibration
+        - YOLO model inference
+        .
+        Framework:
+        - Google Test (C++)
+        - pytest (Python)
+        - Mock camera feeds
+    }
+    
+    rectangle "Integration\nTesting" <<testing>> as integration_tests {
+        Test Scenarios:
+        - End-to-end pose tracking
+        - Multi-camera synchronization
+        - HMD + YOLO fusion
+        - Network reliability
+        - Performance benchmarks
+        .
+        Environments:
+        - Single camera setup
+        - Multi-camera arrays
+        - Various lighting conditions
+    }
+    
+    rectangle "Performance\nBenchmarking" <<testing>> as performance_tests {
+        Metrics:
+        - Latency measurements
+        - FPS under load
+        - Accuracy vs ground truth
+        - Resource utilization
+        - Tracking stability
+        .
+        Tools:
+        - Motion capture validation
+        - Automated test suites
+        - Stress testing
+    }
+    
+    rectangle "User Acceptance\nTesting" <<testing>> as user_tests {
+        Scenarios:
+        - VR gaming sessions
+        - Fitness applications  
+        - Multi-user environments
+        - Edge case handling
+        - Usability evaluation
+        .
+        Validation:
+        - Tracking accuracy
+        - Setup complexity
+        - Performance satisfaction
+    }
+}
+
+' === DEPENDENCIES ===
+proto --> cameras : "Protocol ready"
+driver --> yolo : "Driver architecture"
+build --> optimization : "Build system"
+
+cameras --> yolo : "Camera feeds"
+yolo --> processing : "Pose detections"
+processing --> coordinates : "Tracker mappings"
+
+calibration --> coordinates : "Spatial data"
+coordinates --> hmd_fusion : "World coordinates"
+hmd_fusion --> quality : "Fused tracking"
+
+processing --> optimization : "Baseline system"
+quality --> unit_tests : "Features to test"
+optimization --> integration_tests : "Optimized system"
+
+unit_tests --> integration_tests : "Validated components"
+integration_tests --> performance_tests : "Integrated system"
+performance_tests --> user_tests : "Performance baseline"
+
+' === MILESTONES ===
+note top of cameras
+    MILESTONE 1
+    Basic pose detection
+    Single camera -> VR
+    ====
+    Target: 4-6 weeks
+    Deliverable: Working demo
+end note
+
+note top of coordinates
+    MILESTONE 2
+    Multi-camera tracking
+    Spatial calibration
+    ====
+    Target: 6-8 weeks
+    Deliverable: Room-scale tracking
+end note
+
+note top of optimization
+    MILESTONE 3
+    Production ready
+    Real-time performance
+    ====
+    Target: 10-12 weeks  
+    Deliverable: Beta release
+end note
+
+note top of user_tests
+    MILESTONE 4
+    Validated system
+    Production deployment
+    ====
+    Target: 14-16 weeks
+    Deliverable: v1.0 release
+end note
+
+@enduml

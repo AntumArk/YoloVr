@@ -13,23 +13,22 @@ vr::EVRInitError MyDeviceProvider::Init( vr::IVRDriverContext *pDriverContext )
 	// OpenVR provides a macro to do this for us.
 	VR_INIT_SERVER_DRIVER_CONTEXT( pDriverContext );
 
-	const unsigned int number_of_trackers = 2;
-	for ( unsigned int i = 0; i < number_of_trackers; i++ )
+	// Create all tracker types defined in our enum
+	const unsigned int number_of_tracker_types = 12; // Total number of tracker types in MyTrackers enum
+	for ( unsigned int i = 0; i < number_of_tracker_types; i++ )
 	{
-
 		std::unique_ptr< MyTrackerDeviceDriver > tracker_device = std::make_unique< MyTrackerDeviceDriver >( i );
 
-		// Now we need to tell vrserver about our controllers.
+		// Now we need to tell vrserver about our trackers.
 		// The first argument is the serial number of the device, which must be unique across all devices.
 		// We get it from our driver settings when we instantiate,
 		// And can pass it out of the function with MyGetSerialNumber().
-		// Let's add the left hand controller first (there isn't a specific order).
 		// make sure we actually managed to create the device.
 		// TrackedDeviceAdded returning true means we have had our device added to SteamVR.
 		if ( !vr::VRServerDriverHost()->TrackedDeviceAdded( tracker_device->MyGetSerialNumber().c_str(),
 				 vr::TrackedDeviceClass_GenericTracker, tracker_device.get() ) )
 		{
-			DriverLog( "Failed to create left controller device!" );
+			DriverLog( "Failed to create tracker device with id %d!", i );
 			// We failed? Return early.
 			return vr::VRInitError_Driver_Unknown;
 		}
@@ -37,6 +36,17 @@ vr::EVRInitError MyDeviceProvider::Init( vr::IVRDriverContext *pDriverContext )
 		my_tracker_devices_.emplace_back( std::move( tracker_device ) );
 	}
 
+	// Initialize UDP receiver for external tracking data
+	tracker_receiver_ = std::make_unique<yolovr::TrackerDataReceiver>("0.0.0.0", 9999);
+	
+	if (tracker_receiver_->Start()) {
+		DriverLog("UDP tracker data receiver started on port 9999");
+	} else {
+		DriverLog("Failed to start UDP receiver, using fallback fake data");
+		// Don't fail initialization, just use fake data
+	}
+
+	DriverLog( "Created %d tracker devices successfully", number_of_tracker_types );
 	return vr::VRInitError_None;
 }
 
@@ -64,9 +74,17 @@ bool MyDeviceProvider::ShouldBlockStandbyMode()
 //-----------------------------------------------------------------------------
 void MyDeviceProvider::RunFrame()
 {
+	// Update all tracker devices with latest UDP data
+	yolovr::TrackerFrame latest_frame;
+	bool has_udp_data = tracker_receiver_ && tracker_receiver_->GetLatestFrame(latest_frame);
+	
 	// call our devices to run a frame
 	for ( const auto &tracker : my_tracker_devices_ )
 	{
+		// Pass the UDP frame data to each tracker
+		if (has_udp_data) {
+			tracker->MyUpdateFromUDP(latest_frame);
+		}
 		tracker->MyRunFrame();
 	}
 
@@ -104,6 +122,13 @@ void MyDeviceProvider::LeaveStandby()
 //-----------------------------------------------------------------------------
 void MyDeviceProvider::Cleanup()
 {
+	// Stop UDP receiver
+	if (tracker_receiver_) {
+		tracker_receiver_->Stop();
+		tracker_receiver_.reset();
+		DriverLog("UDP tracker data receiver stopped");
+	}
+	
 	// Our tracker devices will have already deactivated. Let's now destroy them.
 	for ( auto &tracker : my_tracker_devices_ )
 	{

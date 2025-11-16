@@ -1,0 +1,86 @@
+@startuml YoloVr Roadmap
+
+title YoloVr Development Roadmap
+
+!define COMPLETED #d4edda
+!define TODO #f8d7da
+!define TESTING #cce5ff
+
+package "COMPLETED FOUNDATION" {
+    rectangle "Protocol Buffers" as proto <<COMPLETED>>
+    rectangle "OpenVR Driver Core" as driver <<COMPLETED>>
+    rectangle "Build System" as build <<COMPLETED>>
+}
+
+package "PHASE 1: COMPUTER VISION" {
+    rectangle "Multi-Camera Input" as cameras <<TODO>>
+    rectangle "YOLO Pose Detection" as yolo <<TODO>>
+    rectangle "Pose Processing" as processing <<TODO>>
+}
+
+package "PHASE 2: SPATIAL TRACKING" {
+    rectangle "Camera Calibration" as calibration <<TODO>>
+    rectangle "Coordinate Transform" as coordinates <<TODO>>
+    rectangle "HMD Fusion" as hmd_fusion <<TODO>>
+}
+
+package "PHASE 3: OPTIMIZATION" {
+    rectangle "Real-time Optimization" as optimization <<TODO>>
+    rectangle "Quality Enhancement" as quality <<TODO>>
+    rectangle "Configuration UI" as config <<TODO>>
+}
+
+package "PHASE 4: TESTING" {
+    rectangle "Unit Tests" as unit_tests <<TESTING>>
+    rectangle "Integration Tests" as integration_tests <<TESTING>>
+    rectangle "Performance Tests" as performance_tests <<TESTING>>
+    rectangle "User Acceptance" as user_tests <<TESTING>>
+}
+
+' Dependencies
+proto --> cameras
+driver --> yolo
+build --> optimization
+
+cameras --> yolo
+yolo --> processing
+processing --> coordinates
+
+calibration --> coordinates
+coordinates --> hmd_fusion
+hmd_fusion --> quality
+
+processing --> optimization
+quality --> unit_tests
+optimization --> integration_tests
+
+unit_tests --> integration_tests
+integration_tests --> performance_tests
+performance_tests --> user_tests
+
+' Milestones
+note top of cameras
+  MILESTONE 1
+  Basic pose detection
+  4-6 weeks
+end note
+
+note top of coordinates
+  MILESTONE 2
+  Multi-camera tracking
+  6-8 weeks
+end note
+
+note top of optimization
+  MILESTONE 3
+  Production ready
+  10-12 weeks
+end note
+
+note top of user_tests
+  MILESTONE 4
+  v1.0 release
+  14-16 weeks
+end note
+
+@enduml

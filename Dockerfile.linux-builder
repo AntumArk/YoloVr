@@ -8,6 +8,9 @@ RUN apt-get update && apt-get install -y \
     ninja-build \
     git \
     pkg-config \
+    # Protocol Buffers
+    protobuf-compiler \
+    libprotobuf-dev \
     # OpenGL and graphics libraries  
     libgl1-mesa-dev \
     libglu1-mesa-dev \
@@ -26,6 +29,8 @@ RUN apt-get update && apt-get install -y \
 # ninja-build: Fast parallel build system (alternative to make)
 # git: Version control system for cloning dependencies
 # pkg-config: Helper tool for compiling applications and libraries
+# protobuf-compiler: Protocol Buffers compiler for generating C++/Python code
+# libprotobuf-dev: Protocol Buffers C++ development libraries
 # libgl1-mesa-dev: OpenGL development libraries (Mesa implementation)
 # libglu1-mesa-dev: OpenGL Utility Library development files
 # libx11-dev: X11 client-side library development files

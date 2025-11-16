@@ -1,0 +1,14 @@
+@startuml Simple Test
+title Simple PlantUML Test
+
+actor User
+participant "Camera System" as Camera
+participant "YOLO Processor" as YOLO
+participant "VR Driver" as Driver
+
+User -> Camera : Start tracking
+Camera -> YOLO : Video frames
+YOLO -> Driver : Pose data
+Driver -> User : VR tracking
+
+@enduml
